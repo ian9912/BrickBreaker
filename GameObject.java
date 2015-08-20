@@ -54,40 +54,36 @@ public abstract class GameObject {
 		boolean isOverlap = false;
 		
 		Point otherTopLeft = other.getPos();
-		Point otherTopRight = new Point((int)otherTopLeft.x + other.getWidth(), (int)otherTopLeft.y);
-		Point otherBottomLeft = new Point((int)otherTopLeft.x, (int)otherTopLeft.y + other.getHeight());
-		Point otherBottomRight = new Point((int)otherTopLeft.x + other.getWidth(), (int)otherTopLeft.y + other.getHeight());
-		
+		int otherLeftX = otherTopLeft.x;
+		int otherTopY = otherTopLeft.y;
+		int otherRightX = otherLeftX + other.width;
+		int otherBottomY = otherTopY + other.height;
+
+
 		//top left corner of this
-		int thisTopLeftX = this.x;
-		int thisTopLeftY = this.y;
-		int thisTopRightX = this.x + this.width;
-		int thisTopRightY = this.y;
-		int thisBottomLeftX = this.x;
-		int thisBottomLeftY = this.y + this.height;
-		int thisBottomRightX = this.x + this.width;
-		int thisBottomRightY = this.y + this.height;
+		int thisLeftX = this.x;
+		int thisTopY = this.y;
+		int thisRightX = this.x + this.width;
+		int thisBottomY = this.y + this.height;
 		
-		if (thisTopLeftX >= otherTopLeft.x && thisTopLeftX <= otherTopRight.x &&
-			thisTopLeftY >= otherTopRight.y && thisTopLeftY <= otherBottomRight.y ||
+		if (thisLeftX >= otherLeftX && thisLeftX <= otherRightX &&
+			thisTopY >= otherTopY && thisTopY <= otherBottomY ||
 			
-			thisTopRightX >= otherTopLeft.x && thisTopRightX <= otherTopRight.x &&
-			thisTopRightY >= otherTopRight.y && thisTopRightY <= otherBottomRight.y ||
+			thisRightX >= otherLeftX && thisRightX <= otherRightX &&
+			thisTopY >= otherTopY&& thisTopY <= otherBottomY ||
 			
-			thisBottomRightX >= otherTopLeft.x && thisBottomRightX <= otherTopRight.x &&
-			thisBottomRightY >= otherTopRight.y && thisBottomRightY <= otherBottomRight.y ||
+			thisRightX >= otherLeftX && thisRightX <= otherRightX &&
+			thisBottomY >= otherTopY && thisBottomY <= otherBottomY ||
 			
-			thisBottomLeftX >= otherTopLeft.x && thisBottomLeftX <= otherTopRight.x &&
-			thisBottomLeftY >= otherTopRight.y && thisBottomLeftY <= otherBottomRight.y)
+			thisLeftX >= otherLeftX && thisLeftX <= otherRightX &&
+			thisBottomY >= otherTopY && thisBottomY <= otherBottomY)
 			{
 				isOverlap = true;
 			}
 		
 		
 		if (isOverlap && this instanceof Ball)
-		{
-			double distance;
-			
+		{	
 			//collision with another ball
 			if (other instanceof Ball)
 			{
@@ -95,14 +91,29 @@ public abstract class GameObject {
 			}
 			else //collision with rectangle
 			{
-				distance = Math.min(Math.sqrt(Math.pow((otherBottomRight.x - this.getCenter().x), 2) + Math.pow((otherBottomRight.y - this.getCenter().y), 2)),Math.min(Math.sqrt(Math.pow((otherBottomLeft.x - this.getCenter().x), 2) + Math.pow((otherBottomLeft.y - this.getCenter().y), 2)), Math.min(Math.sqrt(Math.pow((otherTopLeft.x - this.getCenter().x), 2) + Math.pow((otherTopLeft.y - this.getCenter().y), 2)), Math.sqrt(Math.pow((otherTopRight.x - this.getCenter().x), 2) + Math.pow((otherTopRight.y - this.getCenter().y), 2)))));
-				System.out.println(distance);
-				if (distance > this.width / 2)
-					isOverlap = false;
+				Point thisCenter = this.getCenter();
+				double radius = this.getWidth() / 2;
+				// Find the closest point to the circle within the rectangle
+				double closestX = clamp(thisCenter.x, otherLeftX, otherRightX);
+				double closestY = clamp(thisCenter.y, otherTopY, otherBottomY);
+
+				// Distances in x and y between the circle's center and this closest point
+				double distanceX = thisCenter.x - closestX;
+				double distanceY = thisCenter.y - closestY;
+
+				/* Compare distance squared to closestPoint and radius squared
+				Using squares where possible is usually faster than Math.sqrt*/
+				double distanceSquared = (distanceX * distanceX) + (distanceY * distanceY);
+				return distanceSquared < (radius * radius);
+
 			}
 		}
 		
 		return isOverlap;
+	}
+
+	public double clamp(double value, double min, double max){
+		return Math.max(min, Math.min(max, value));
 	}
 	
 	public abstract void paint(Graphics page);
